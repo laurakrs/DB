@@ -125,8 +125,6 @@ HAVING COUNT(b.NCL) >= ALL(SELECT(
 
 
 
-
-
 -- (R12) Jour de l’année où l’hôtel « Bon Séjour » de la station « Chamonix » a eu le plus de réservations.
 SELECT b.Jour
 FROM HOTELS h, RESORTS r, BOOKINGS b
@@ -165,6 +163,15 @@ HAVING COUNT(b.NCL) >= ALL(SELECT(
             AND h2.NomH = 'Bon Séjour'
         GROUP BY b2.NS, b2.NH);
 
+-- autre option
+SELECT Jour
+FROM BOOKINGS
+WHERE NS = (SELECT NS FROM RESORTS WHERE NomS = 'Chamonix')
+  AND NH = (SELECT NH FROM HOTELS WHERE NomH = 'Bon Séjour' AND NS = (SELECT NS FROM RESORTS WHERE NomS = 'Chamonix'))
+GROUP BY Jour
+ORDER BY COUNT(NCL) DESC
+LIMIT 1;
+
 -- (R13) Liste des hôtels, avec leur nom, adresse et catégorie, dont toutes les chambres ont un prix
 -- inférieur à 40 euros.
 
@@ -178,11 +185,120 @@ HAVING ALL(SELECT prix FROM HOTELS
             
             )
 
+
+-- autre option
+
+SELECT NH, NomH, AdrH, CatH
+FROM HOTELS
+WHERE NS IN (SELECT NS FROM RESORTS)
+AND NH NOT IN (
+    SELECT NH
+    FROM ROOMS
+    WHERE Prix >= 40
+);
+
 -- (R14) Prix de la chambre la moins chère des hôtels 3 étoiles situés dans une station balnéaire.
+SELECT ro.prix
+FROM HOTELS h, ROOMS ro, RESORTS re
+WHERE h.NH = ro.NH
+    AND h.NH = re.NS
+    AND h.NS = re.NS
+    AND typeS = 'mer'
+GROUP BY ro.NS,ro.NH,ro.NCH
+HAVING prix =
+    (SELECT MIN(prix) 
+    FROM HOTELS h2, ROOMS ro2, RESORTS re2
+    WHERE h2.NH = ro2.NH
+        AND h2.NH = re2.NS
+        AND h2.NS = re2.NS
+        AND typeS = 'mer'
+        GROUP BY b2.NS,b2.NH);
+
+-- autre
+SELECT MIN(Prix) AS PrixMin
+FROM ROOMS
+WHERE NH IN (
+    SELECT NH
+    FROM HOTELS
+    WHERE CatH = 3 AND NS IN (
+        SELECT NS
+        FROM RESORTS
+        WHERE TypeS = 'mer'
+    )
+);
+
+
+
 
 
 -- (R15) Nom des clients ayant réservé dans tous les hôtels 2 étoiles de la station « Chamonix ».
+SELECT NomCl
+FROM BOOKINGS b, HOTELS h, RESORTS r, GUESTS g
+WHERE g.NCL = b.NCL
+    AND h.NH = b.NH
+    AND h.NS = b.NS
+    AND h.NS = r.NS
+    AND CatH = 2
+    AND NomS = 'Chamonix'
+GROUP BY NomCl
+HAVING b.NH = ALL(SELECT NH
+                FROM HOTELS h2, RESORTS r2, GUESTS g2
+                WHERE h.NS = r.NS
+                    AND CatH = 2
+                    AND NomS = 'Chamonix'
+                );
+
+-- autre
+SELECT NomCl
+FROM GUESTS
+WHERE NCL IN (
+    SELECT NCL
+    FROM BOOKINGS
+    WHERE NH IN (
+        SELECT NH
+        FROM HOTELS
+        WHERE CatH = 2 AND NS = (
+            SELECT NS
+            FROM RESORTS
+            WHERE NomS = 'Chamonix'
+        )
+    )
+)
+GROUP BY NomCl
+HAVING COUNT(DISTINCT NH) = (
+    SELECT COUNT(*)
+    FROM HOTELS
+    WHERE CatH = 2 AND NS = (
+        SELECT NS
+        FROM RESORTS
+        WHERE NomS = 'Chamonix'
+    )
+);
 
 
 -- (R16) Nom des clients ayant réservé au moins trois jours consécutifs une même chambre dans le
 --même hôtel de la même station.
+SELECT NomCl
+FROM BOOKINGS b, HOTELS h, RESORTS re, GUESTS g, ROOMS ro
+WHERe g.NCL = b.NCL
+    AND h.NH = b.NH
+    AND h.NS = b.NS
+    AND h.NS = r.NS
+GROUP BY NomCl
+HAVING (*) > 3;
+
+-- autre
+SELECT DISTINCT g.NomCl
+FROM GUESTS g
+JOIN BOOKINGS b ON g.NCL = b.NCL
+WHERE (b.Jour IN (
+        SELECT b1.Jour
+        FROM BOOKINGS b1
+        WHERE b1.NS = b.NS
+          AND b1.NH = b.NH
+          AND b1.NCH = b.NCH
+          AND b1.NCL = b.NCL
+          AND b1.Jour BETWEEN b.Jour - 2 AND b.Jour
+    ))
+GROUP BY g.NCL
+HAVING COUNT(DISTINCT b.Jour) >= 3;
