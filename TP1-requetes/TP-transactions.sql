@@ -297,16 +297,76 @@ UPDATE Comptes SET Solde = Solde + 100 WHERE Nom = 'Paul';
 
 -- 2. Dans une nouvelle transaction de la session S2, peut-on augmenter le solde des comptes de Pierre de 50 € ?
 -- Pourquoi ?
+UPDATE Comptes SET Solde = Solde + 50 WHERE Nom = 'Paul';
 
+-- Non, c'est bloquer
 
 -- 3. Dans la session S1, peut-on diminuer le solde des comptes de Pierre de 100 € ? Pourquoi ?
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+
+-- oui, cest la meme session
+
 -- 4. Dans la session S2, peut-on augmenter le solde des comptes de Paul de 200 € ? Pourquoi ?
+UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
+
+-- non, cest bloque
+
 -- 5. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous validez les deux transactions ?
+-- Rien a change ??
+
 -- 6. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous validez la transaction de la session S 1 et
 -- annulez celle de la session S2 ? (il faut refaire les étapes 1 à 4).
+-- s1
+UPDATE Comptes SET Solde = Solde + 100 WHERE Nom = 'Paul';
+COMMIT;
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+COMMIT;
+
+--s2
+UPDATE Comptes SET Solde = Solde + 50 WHERE Nom = 'Paul';
+ROLLBACK;
+UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
+ROLLBACK;
+
+-- on a le resultat de la session 1
+
+
+
 -- 7. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous annulez la transaction de la sessions S1 et
 -- validez celle de la session S2 ? (il faut refaire les étapes 1 à 4).
+
+-- s1
+UPDATE Comptes SET Solde = Solde + 100 WHERE Nom = 'Paul';
+ROLLBACK;
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+ROLLBACK;
+
+--s2
+UPDATE Comptes SET Solde = Solde + 50 WHERE Nom = 'Paul';
+COMMIT;
+UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
+COMMIT;
+
+-- on a le resultat de la session 2
+
+
 -- 8. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous annulez les deux transactions ? (il faut
 -- refaire les étapes 1 à 4)
+-- rien change
+
+-- s1
+UPDATE Comptes SET Solde = Solde + 100 WHERE Nom = 'Paul';
+ROLLBACK;
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+ROLLBACK;
+
+--s2
+UPDATE Comptes SET Solde = Solde + 50 WHERE Nom = 'Paul';
+ROLLBACK;
+UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
+ROLLBACK;
+
+
+
 -- 9. Est-il possible d'automatiser la décision quant à la terminaison des transactions de S1 et S2 ?
 -- Que concluez-vous de cette gestion de l’isolation ?
