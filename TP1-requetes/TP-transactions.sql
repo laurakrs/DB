@@ -302,9 +302,9 @@ UPDATE Comptes SET Solde = Solde + 50 WHERE Nom = 'Paul';
 -- Non, c'est bloquer
 
 -- 3. Dans la session S1, peut-on diminuer le solde des comptes de Pierre de 100 € ? Pourquoi ?
-UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Pierre';
 
--- oui, cest la meme session
+-- !!!!!!!  Refaire
 
 -- 4. Dans la session S2, peut-on augmenter le solde des comptes de Paul de 200 € ? Pourquoi ?
 UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
@@ -312,14 +312,14 @@ UPDATE Comptes SET Solde = Solde + 200 WHERE Nom = 'Paul';
 -- non, cest bloque
 
 -- 5. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous validez les deux transactions ?
--- Rien a change ??
+-- S1
 
 -- 6. Quels est l'état des comptes (dans les sessions S1 ou S2) si vous validez la transaction de la session S 1 et
 -- annulez celle de la session S2 ? (il faut refaire les étapes 1 à 4).
 -- s1
 UPDATE Comptes SET Solde = Solde + 100 WHERE Nom = 'Paul';
 COMMIT;
-UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Paul';
+UPDATE Comptes SET Solde = Solde - 100 WHERE Nom = 'Pierre';
 COMMIT;
 
 --s2
